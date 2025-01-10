@@ -1,12 +1,22 @@
 const container = document.querySelector(".container");
 
+const pokemonParty = swordParty;
+
 const teamSize = 6;
+const sortMode = "all"; // "favorites", "non", "all"
 const artStyle = "official"; // "official", "pixel"
 const showNames = true;
 const showTypes = true;
 
 function main() {
-    generatePage(swordNuzlocke);
+    generatePage(filterPokemon(pokemonParty));
+    //generateAnyPokemon();
+}
+
+const filterPokemon = party => {
+    if (sortMode == "favorites") return party.filter(item => item.favorite == true);
+    else if(sortMode == "non") return party.filter(item => item.favorite == false);
+    else return party;
 }
 
 const generateUniqueNumbers = (size, max) => {
@@ -33,7 +43,7 @@ const generatePokemonFromParty = (party, style = "official") => {
         let pokemonTitle = generateTitle(party[i]["nickname"]);
         let pokemonImage = document.createElement("img");
 
-        fetch('https://pokeapi.co/api/v2/pokemon/' + party[i]["species"])
+        fetch('https://pokeapi.co/api/v2/pokemon/' + party[i]["species"].toLowerCase())
             .then(response => response.json())
             .then(data => {
                 pokemonImage.src = generateImageLink(data, party[i]["shiny"]);
@@ -48,6 +58,41 @@ const generatePokemonFromParty = (party, style = "official") => {
         container.appendChild(pokemonSlot);
     }
 }
+
+async function generateAnyPokemon() {
+    const res = await fetch('https://pokeapi.co/api/v2/pokedex/1');
+    const json = await res.json(); 
+    
+    let randomParty = generateUniqueNumbers(teamSize, json.pokemon_entries.length);
+    for (let i = 0; i < randomParty.length; i++) {
+        let pokemonSlot = document.createElement("div");
+        pokemonSlot.classList.add("pokemon");
+        let pokemonTitle;
+        let pokemonImage = document.createElement("img");
+
+        fetch('https://pokeapi.co/api/v2/pokemon/' + String(randomParty[i]))
+            .then(response => response.json())
+            .then(data => {
+                pokemonTitle = generateTitle(data["name"]);
+                pokemonTitle.style.textTransform = "capitalize";
+                pokemonImage.src = generateImageLink(data, false);
+                if (showTypes) generateTypes(data, pokemonTitle);
+                pokemonSlot.appendChild(pokemonTitle);
+                pokemonSlot.appendChild(pokemonImage);            
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        container.appendChild(pokemonSlot);
+    }
+}
+
+
+
+
+
+
+
 
 const generateTitle = pokemonName => {
     let name = document.createElement("div");
